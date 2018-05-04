@@ -10,8 +10,13 @@ outputFolder = "/path/to/download/to"
 downloadFolder = "folderinmycloud"
 pmb.fetchFolder(outputFolder, downloadFolder)
 
+# download a folder completely (and re-create top folder afterwards)
+outputFolder = "/path/to/download/to"
+downloadFolder = "folderinmycloud"
+pmb.fetchFolder(outputFolder, downloadFolder, True)
+
 # download a folder completely (and skip some file types by extension)
 outputFolder = "/path/to/download/to"
 downloadFolder = "folderinmycloud"
 skipFileTypes = {".sfv", ".txt", ".jpg"}
-pmb.fetchFolder(outputFolder, downloadFolder, skipFileTypes)
+pmb.fetchFolder(outputFolder, downloadFolder, False, skipFileTypes)
