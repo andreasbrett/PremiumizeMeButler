@@ -163,7 +163,7 @@ class pmb:
 							return id
 
 
-	def fetchFolder(self, outputFolder, folderName = "root", skipFileTypes = None, path = "", folderId = None, recursion = False):
+	def fetchFolder(self, outputFolder, folderName = "root", recreateFolder = False, skipFileTypes = None, path = "", folderId = None, recursion = False):
 
 		if not recursion:
 			print "--------------------------------------------------"
@@ -201,6 +201,10 @@ class pmb:
 					if self._countFolder(response) == 0:
 						print " - Folder is empty: deleting it"
 						self._deleteFolder(folderId)
+						
+						if recreateFolder:
+							print " - Re-creating folder"
+							self._createFolder(folderName, folderId)
 					else:
 						print " - Folder not yet empty! Leaving it as is."
 
@@ -209,4 +213,4 @@ class pmb:
 				for item in response["content"]:
 					if item["type"] == "folder":
 						newPath = path + "/" + item["name"]
-						self.fetchFolder(outputFolder, folderName, skipFileTypes, newPath, item["id"], True)
+						self.fetchFolder(outputFolder, folderName, recreateFolder, skipFileTypes, newPath, item["id"], True)
