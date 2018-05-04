@@ -104,7 +104,7 @@ class pmb:
                                         print "   -> Message: " + response2["message"]
                                 else:
                                         newOutputFolder = outputFolder + "/" + item["name"]
-                                        
+
                                         # create folder
                                         self.createFolder(newOutputFolder)
 
