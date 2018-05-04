@@ -80,6 +80,28 @@ class pmb:
 			print "   -> deleted from Premiumize.me"
 
 
+	def _downloadFile(self, url, outputFolder):
+		try:
+			filename = os.path.basename(url)
+			print " - Downloading: " + filename
+			req = urllib2.urlopen(url)
+			with open(outputFolder + "/" + filename, "wb") as f:
+				while True:
+					chunk = req.read(16384)
+					if not chunk: break
+					f.write(chunk)
+			print "   -> SUCCESS"
+			return True
+
+		except urllib2.HTTPError, e:
+			print "   -> ERROR: ", e.code, url
+			return False
+
+		except urllib2.URLError, e:
+			print "   -> ERROR: ", e.reason, url
+			return False
+
+
 	def _downloadFolder(self, response, outputFolder, skipFileTypes):
 		# iterate over all items in current folder
 		for item in response["content"]:
@@ -103,7 +125,7 @@ class pmb:
 
 				# not skipped => download it and if successful delete it
 				if not skipped:
-					if self.downloadFile(item["link"], outputFolder):
+					if self._downloadFile(item["link"], outputFolder):
 						self._deleteItem(item)
 
 			# folder => create folder locally and go deeper
