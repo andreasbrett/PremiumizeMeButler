@@ -204,7 +204,7 @@ class pmb:
 						
 						if recreateFolder:
 							print " - Re-creating folder"
-							self._createFolder(folderName, reponse["parent_id"])
+							self._createFolder(folderName, response["parent_id"])
 					else:
 						print " - Folder not yet empty! Leaving it as is."
 
