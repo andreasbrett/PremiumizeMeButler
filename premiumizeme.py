@@ -16,6 +16,7 @@ class pmb:
 	uriFolders = "https://www.premiumize.me/api/folder/list"
 	uriDeleteItem = "https://www.premiumize.me/api/item/delete"
 	uriDeleteFolder = "https://www.premiumize.me/api/folder/delete"
+	uriCreateFolder = "https://www.premiumize.me/api/folder/create"
 
 
 	# ==========================================================================================================
@@ -26,7 +27,7 @@ class pmb:
 		self.auth_pin = auth_pin
 
 
-	def makeApiRequest(self, apiUri, queryParams = None):
+	def _makeApiRequest(self, apiUri, queryParams = None):
 		uri = apiUri + "?customer_id=" + self.auth_customer_id + "&pin=" + self.auth_pin
 
 		# build request if queryParams are present
@@ -41,12 +42,26 @@ class pmb:
 		return json.loads(response.decode("utf-8"))
 
 
-	def createFolder(self, path):
+	def _createFolderLocally(self, path):
 		if not os.path.exists(path):
 			os.makedirs(path)
 
-	def deleteFolder(self, folderId):
-		response = self.makeApiRequest(pmb.uriDeleteFolder, {"id": folderId})
+
+	def _createFolder(self, folderName, parentId = None):
+		if parentId:
+			response = self._makeApiRequest(pmb.uriCreateFolder, {"name": folderName, "parent_id": parentId})
+		else:
+			response = self._makeApiRequest(pmb.uriCreateFolder, {"name": folderName})
+
+		if response["status"] != "success":
+			print "   -> ERROR creating folder: " + folderName
+			print "      -> Message: " + response["message"]
+		else:
+			print "   -> created folder " + folderName
+
+
+	def _deleteFolder(self, folderId):
+		response = self._makeApiRequest(pmb.uriDeleteFolder, {"id": folderId})
 
 		if response["status"] != "success":
 			print "   -> ERROR deleting folder"
@@ -55,8 +70,8 @@ class pmb:
 			print "   -> deleted from Premiumize.me"
 
 
-	def deleteItem(self, item):
-		response = self.makeApiRequest(pmb.uriDeleteItem, {"id": item["id"]})
+	def _deleteItem(self, item):
+		response = self._makeApiRequest(pmb.uriDeleteItem, {"id": item["id"]})
 
 		if response["status"] != "success":
 			print "   -> ERROR deleting:" + item["name"]
@@ -65,7 +80,7 @@ class pmb:
 			print "   -> deleted from Premiumize.me"
 
 
-	def downloadFolder(self, response, outputFolder, skipFileTypes):
+	def _downloadFolder(self, response, outputFolder, skipFileTypes):
 		# iterate over all items in current folder
 		for item in response["content"]:
 
@@ -82,14 +97,14 @@ class pmb:
 						# if extension matches skipFileTypes => skip and delete it
 						if extension == "." + skipFileType:
 							print " - SKIPPING: " + item["name"]
-							self.deleteItem(item)
+							self._deleteItem(item)
 							skipped = True
 							break
 
 				# not skipped => download it and if successful delete it
 				if not skipped:
 					if self.downloadFile(item["link"], outputFolder):
-						self.deleteItem(item)
+						self._deleteItem(item)
 
 			# folder => create folder locally and go deeper
 			if item["type"] == "folder":
@@ -97,7 +112,7 @@ class pmb:
 				print "************************"
 
 				# fetch folder listing
-				response2 = self.makeApiRequest(pmb.uriFolders, {"id" : item["id"]})
+				response2 = self._makeApiRequest(pmb.uriFolders, {"id" : item["id"]})
 
 				if response2["status"] != "success":
 					print " - Error fetching folder listing"
@@ -106,27 +121,44 @@ class pmb:
 					newOutputFolder = outputFolder + "/" + item["name"]
 
 					# create folder
-					self.createFolder(newOutputFolder)
+					self._createFolderLocally(newOutputFolder)
 
 					# recurse over subfolder
-					self.downloadFolder(response2, newOutputFolder, skipFileTypes)
+					self._downloadFolder(response2, newOutputFolder, skipFileTypes)
 
 
-	def countFolder(self, response, count = 0):
+	def _countFolder(self, response, count = 0):
 		# iterate over all items in current folder
 		for item in response["content"]:
 
 			# folder => go deeper
 			if item["type"] == "folder":
 				# fetch folder listing
-				response2 = self.makeApiRequest(pmb.uriFolders, {"id" : item["id"]})
-				count = count + self.countFolder(response2, count)
+				response2 = self._makeApiRequest(pmb.uriFolders, {"id" : item["id"]})
+				count = count + self._countFolder(response2, count)
 
 			# file => count it
 			if item["type"] == "file":
 				count = count + 1
 
 		return count
+
+
+	def getFolderId(self, folderName = "root", folderId = None):
+		if folderId:
+			response = self._makeApiRequest(pmb.uriFolders, {"id" : folderId})
+		else:
+			response = self._makeApiRequest(pmb.uriFolders)
+
+		if response["status"] == "success":
+			if response["name"] == folderName:
+				return folderId
+
+			else:
+				# correct folder not yet found. iterate over subfolders
+				for item in response["content"]:
+					if item["type"] == "folder":
+						self.getFolderId(folderName, item["id"])
 
 
 	def fetchFolder(self, outputFolder, folderName = "root", skipFileTypes = None, path = "", folderId = None, recursion = False):
@@ -140,12 +172,12 @@ class pmb:
 			if skipFileTypes:
 				for skipFileType in skipFileTypes:
 					print " * skipFileType:  " + skipFileType
-			self.createFolder(outputFolder)
+			self._createFolderLocally(outputFolder)
 
 		if folderId:
-			response = self.makeApiRequest(pmb.uriFolders, {"id" : folderId})
+			response = self._makeApiRequest(pmb.uriFolders, {"id" : folderId})
 		else:
-			response = self.makeApiRequest(pmb.uriFolders)
+			response = self._makeApiRequest(pmb.uriFolders)
 
 		if response["status"] != "success":
 			print " - Error fetching folder listing for: " + folderName
@@ -155,18 +187,18 @@ class pmb:
 			if response["name"] == folderName:
 				print ""
 				print " --> Found correct folder: " + path
-				self.downloadFolder(response, outputFolder, skipFileTypes)
+				self._downloadFolder(response, outputFolder, skipFileTypes)
 
 				if folderId:
 					print ""
 					print " --> Checking if folder is empty now..."
 
 					# re-fetch response for this folder
-					response = self.makeApiRequest(pmb.uriFolders, {"id" : folderId})
+					response = self._makeApiRequest(pmb.uriFolders, {"id" : folderId})
 
-					if self.countFolder(response) == 0:
+					if self._countFolder(response) == 0:
 						print " - Folder is empty: deleting it"
-						self.deleteFolder(folderId)
+						self._deleteFolder(folderId)
 					else:
 						print " - Folder not yet empty! Leaving it as is."
 
