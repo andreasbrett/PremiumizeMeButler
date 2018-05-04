@@ -158,7 +158,9 @@ class pmb:
 				# correct folder not yet found. iterate over subfolders
 				for item in response["content"]:
 					if item["type"] == "folder":
-						return self.getFolderId(folderName, item["id"])
+						id = self.getFolderId(folderName, item["id"])
+						if id:
+							return id
 
 
 	def fetchFolder(self, outputFolder, folderName = "root", skipFileTypes = None, path = "", folderId = None, recursion = False):
