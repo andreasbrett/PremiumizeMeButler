@@ -162,7 +162,7 @@ class pmb:
 	# createFolder
 	# -----------------------------------------------------------------------------------
 	#	* DESCRIPTION	creates a folder
-	#	* RETURNS		None
+	#	* RETURNS		folder's id
 	# -----------------------------------------------------------------------------------
 	#	* <string> folderName = name of the folder
 	#	* <string> parentId =  parent folder's id
@@ -173,11 +173,12 @@ class pmb:
 		else:
 			response = self._makeApiRequest(pmb.uriCreateFolder, {"name": folderName})
 
-		if response["status"] != "success":
+		if response["status"] == "success":
+			print "   -> created folder " + folderName
+			return response["id"]
+		else:
 			print "   -> ERROR creating folder: " + folderName
 			print "      -> Message: " + response["message"]
-		else:
-			print "   -> created folder " + folderName
 
 
 	# -----------------------------------------------------------------------------------
