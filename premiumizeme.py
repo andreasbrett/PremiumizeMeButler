@@ -210,7 +210,7 @@ class pmb:
 			response = self._makeApiRequest(pmb.uriCreateTransfer, {"type" : "torrent", "src": magnetLink})
 
 		if response["status"] == "success":
-			return reponse["id"]
+			return response["id"]
 
 
 	# -----------------------------------------------------------------------------------
