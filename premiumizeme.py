@@ -17,6 +17,7 @@ class pmb:
 	uriTransfers = "https://www.premiumize.me/api/transfer/list"
 	uriDeleteItem = "https://www.premiumize.me/api/item/delete"
 	uriDeleteFolder = "https://www.premiumize.me/api/folder/delete"
+	uriDeleteTransfer = "https://www.premiumize.me/api/transfer/delete"
 	uriCreateFolder = "https://www.premiumize.me/api/folder/create"
 	uriCreateTransfer = "https://www.premiumize.me/api/transfer/create"
 
@@ -187,15 +188,32 @@ class pmb:
 	#	* DESCRIPTION	retrieves transfer object containing e.g. status
 	#	* RETURNS		None / transfer object
 	# -----------------------------------------------------------------------------------
-	#	* <string> id =  transfer id
+	#	* <string> transfer_id =  transfer id
 	# -----------------------------------------------------------------------------------
-	def getTransfer(self, id):
+	def getTransfer(self, transfer_id):
 		response = self._makeApiRequest(pmb.uriTransfers)
 
 		if response["status"] == "success":
 			for transfer in response["transfers"]:
-				if transfer["id"] == id:
+				if transfer["id"] == transfer_id:
 					return transfer
+
+
+	# -----------------------------------------------------------------------------------
+	# deleteTransfer
+	# -----------------------------------------------------------------------------------
+	#	* DESCRIPTION	deletes a transfer
+	#	* RETURNS		True/False
+	# -----------------------------------------------------------------------------------
+	#	* <string> transfer_id =  transfer id
+	# -----------------------------------------------------------------------------------
+	def deleteTransfer(self, transfer_id):
+		response = self._makeApiRequest(pmb.uriDeleteTransfer, {"id" : transfer_id})
+
+		if response["status"] == "success":
+			return True
+		else:
+			return False
 
 
 	# -----------------------------------------------------------------------------------
