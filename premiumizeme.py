@@ -233,6 +233,8 @@ class pmb:
 
 		if response["status"] == "success":
 			return response["id"]
+		else:
+			print "ERROR: " + response["message"]
 
 
 	# -----------------------------------------------------------------------------------
