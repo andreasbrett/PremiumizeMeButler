@@ -30,11 +30,14 @@ class pmb:
 
 
 	def _makeApiRequest(self, apiUri, queryParams = None):
-		uri = apiUri + "?customer_id=" + self.auth_customer_id + "&pin=" + self.auth_pin
+		authParams = { "customer_id": self.auth_customer_id, "pin": self.auth_pin }
 
 		# build request if queryParams are present
 		if queryParams:
-			uri = uri + "&" + urllib.urlencode(queryParams)
+			queryParams.update(authParams)
+			uri = apiUri + "?%s" % urllib.urlencode(queryParams)
+		else:
+			uri = apiUri + "?%s" % urllib.urlencode(authParams)
 
 		# fetch response
 		request = urllib2.Request(uri)
@@ -162,7 +165,7 @@ class pmb:
 	#	* RETURNS		None
 	# -----------------------------------------------------------------------------------
 	#	* <string> folderName = name of the folder
-	#	* <int> parentId =  parent folder's id
+	#	* <string> parentId =  parent folder's id
 	# -----------------------------------------------------------------------------------
 	def createFolder(self, folderName, parentId = None):
 		if parentId:
@@ -183,7 +186,7 @@ class pmb:
 	#	* DESCRIPTION	retrieves transfer object containing e.g. status
 	#	* RETURNS		None / transfer object
 	# -----------------------------------------------------------------------------------
-	#	* <int> id =  transfer id
+	#	* <string> id =  transfer id
 	# -----------------------------------------------------------------------------------
 	def getTransfer(self, id):
 		response = self._makeApiRequest(pmb.uriTransfers)
@@ -201,7 +204,7 @@ class pmb:
 	#	* RETURNS		None / ID of started transfer
 	# -----------------------------------------------------------------------------------
 	#	* <string> magnetLink = magnet link
-	#	* <int> folderId =  folder to store download in
+	#	* <string> folderId =  folder to store download in
 	# -----------------------------------------------------------------------------------
 	def downloadMagnet(self, magnetLink, folderId = None):
 		if folderId:
@@ -220,7 +223,7 @@ class pmb:
 	#	* RETURNS		None / ID of found folder
 	# -----------------------------------------------------------------------------------
 	#	* <string> folderName = folder to search for
-	#	* <int> folderId =  internal only; for recurring calls
+	#	* <string> folderId =  internal only; for recurring calls
 	# -----------------------------------------------------------------------------------
 	def getFolderId(self, folderName = "root", folderId = None):
 		if folderId:
@@ -252,7 +255,7 @@ class pmb:
 	#	* <boolean> recreateFolder = folder will be deleted after successful download; re-create top-level folder it afterwards?
 	#	* <string[]> skipFileTypes = file extensions to skip (=delete without downloading); e.g. sfv, nfo, txt, idx, sub etc
 	#	* <string> path = internal only; for recurring calls
-	#	* <int> folderId = internal only; for recurring calls
+	#	* <string> folderId = internal only; for recurring calls
 	#	* <boolean> recursion = internal only; for recurring calls
 	# -----------------------------------------------------------------------------------
 	def fetchFolder(self, outputFolder, folderName = "root", recreateFolder = False, skipFileTypes = None, path = "", folderId = None, recursion = False):
