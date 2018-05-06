@@ -14,9 +14,11 @@ class pmb:
 	#  URIs for different API requests
 	# ==========================================================================================================
 	uriFolders = "https://www.premiumize.me/api/folder/list"
+	uriTransfers = "https://www.premiumize.me/api/transfer/list"
 	uriDeleteItem = "https://www.premiumize.me/api/item/delete"
 	uriDeleteFolder = "https://www.premiumize.me/api/folder/delete"
 	uriCreateFolder = "https://www.premiumize.me/api/folder/create"
+	uriCreateTransfer = "https://www.premiumize.me/api/transfer/create"
 
 
 	# ==========================================================================================================
@@ -45,19 +47,6 @@ class pmb:
 	def _createFolderLocally(self, path):
 		if not os.path.exists(path):
 			os.makedirs(path)
-
-
-	def _createFolder(self, folderName, parentId = None):
-		if parentId:
-			response = self._makeApiRequest(pmb.uriCreateFolder, {"name": folderName, "parent_id": parentId})
-		else:
-			response = self._makeApiRequest(pmb.uriCreateFolder, {"name": folderName})
-
-		if response["status"] != "success":
-			print "   -> ERROR creating folder: " + folderName
-			print "      -> Message: " + response["message"]
-		else:
-			print "   -> created folder " + folderName
 
 
 	def _deleteFolder(self, folderId):
@@ -166,6 +155,73 @@ class pmb:
 		return count
 
 
+	# -----------------------------------------------------------------------------------
+	# createFolder
+	# -----------------------------------------------------------------------------------
+	#	* DESCRIPTION	creates a folder
+	#	* RETURNS		None
+	# -----------------------------------------------------------------------------------
+	#	* <string> folderName = name of the folder
+	#	* <int> parentId =  parent folder's id
+	# -----------------------------------------------------------------------------------
+	def createFolder(self, folderName, parentId = None):
+		if parentId:
+			response = self._makeApiRequest(pmb.uriCreateFolder, {"name": folderName, "parent_id": parentId})
+		else:
+			response = self._makeApiRequest(pmb.uriCreateFolder, {"name": folderName})
+
+		if response["status"] != "success":
+			print "   -> ERROR creating folder: " + folderName
+			print "      -> Message: " + response["message"]
+		else:
+			print "   -> created folder " + folderName
+
+
+	# -----------------------------------------------------------------------------------
+	# getTransfer
+	# -----------------------------------------------------------------------------------
+	#	* DESCRIPTION	retrieves transfer object containing e.g. status
+	#	* RETURNS		None / transfer object
+	# -----------------------------------------------------------------------------------
+	#	* <int> id =  transfer id
+	# -----------------------------------------------------------------------------------
+	def getTransfer(self, id):
+		response = self._makeApiRequest(pmb.uriTransfers)
+
+		if response["status"] == "success":
+			for transfer in response["transfers"]:
+				if transfer["id"] == id:
+					return transfer
+
+
+	# -----------------------------------------------------------------------------------
+	# downloadMagnet
+	# -----------------------------------------------------------------------------------
+	#	* DESCRIPTION	creates a transfer out of a magnet link (torrent)
+	#	* RETURNS		None / ID of started transfer
+	# -----------------------------------------------------------------------------------
+	#	* <string> magnetLink = magnet link
+	#	* <int> folderId =  folder to store download in
+	# -----------------------------------------------------------------------------------
+	def downloadMagnet(self, magnetLink, folderId = None):
+		if folderId:
+			response = self._makeApiRequest(pmb.uriCreateTransfer, {"type" : "torrent", "src": magnetLink, "folder_id": folderId})
+		else:
+			response = self._makeApiRequest(pmb.uriCreateTransfer, {"type" : "torrent", "src": magnetLink})
+
+		if response["status"] == "success":
+			return reponse["id"]
+
+
+	# -----------------------------------------------------------------------------------
+	# getFolderId
+	# -----------------------------------------------------------------------------------
+	#	* DESCRIPTION	retrieve ID of a given folder
+	#	* RETURNS		None / ID of found folder
+	# -----------------------------------------------------------------------------------
+	#	* <string> folderName = folder to search for
+	#	* <int> folderId =  internal only; for recurring calls
+	# -----------------------------------------------------------------------------------
 	def getFolderId(self, folderName = "root", folderId = None):
 		if folderId:
 			response = self._makeApiRequest(pmb.uriFolders, {"id" : folderId})
@@ -185,6 +241,20 @@ class pmb:
 							return id
 
 
+	# -----------------------------------------------------------------------------------
+	# fetchFolder
+	# -----------------------------------------------------------------------------------
+	#	* DESCRIPTION	fully download a folder 
+	#	* RETURNS		nothing
+	# -----------------------------------------------------------------------------------
+	#	* <string> outputFolder = folder to put downloads in
+	#	* <string> folderName = folder on Premiumize to check
+	#	* <boolean> recreateFolder = folder will be deleted after successful download; re-create top-level folder it afterwards?
+	#	* <string[]> skipFileTypes = file extensions to skip (=delete without downloading); e.g. sfv, nfo, txt, idx, sub etc
+	#	* <string> path = internal only; for recurring calls
+	#	* <int> folderId = internal only; for recurring calls
+	#	* <boolean> recursion = internal only; for recurring calls
+	# -----------------------------------------------------------------------------------
 	def fetchFolder(self, outputFolder, folderName = "root", recreateFolder = False, skipFileTypes = None, path = "", folderId = None, recursion = False):
 
 		if not recursion:
@@ -226,7 +296,7 @@ class pmb:
 						
 						if recreateFolder:
 							print " - Re-creating folder"
-							self._createFolder(folderName, response["parent_id"])
+							self.createFolder(folderName, response["parent_id"])
 					else:
 						print " - Folder not yet empty! Leaving it as is."
 
