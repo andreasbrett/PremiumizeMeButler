@@ -1,3 +1,11 @@
+"""
+    PremiumizeMeButler
+    ~~~~~~~~~~~~~~~~~~
+    Mini-Framework for Premiumize.me
+    :copyright: © 2018 Andreas Brett
+    :license: GNU General Public License v3.0, see LICENSE for more details
+"""
+
 # -*- coding: utf-8 -*-
 
 import urllib, urllib2, json, os
