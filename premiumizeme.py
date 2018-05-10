@@ -104,6 +104,8 @@ class pmb:
 
 
 	def _downloadFolder(self, response, outputFolder, skipFileTypes):
+		result = 0
+		
 		# iterate over all items in current folder
 		for item in response["content"]:
 
@@ -127,6 +129,7 @@ class pmb:
 				# not skipped => download it and if successful delete it
 				if not skipped:
 					if self._downloadFile(item["link"], outputFolder):
+						result += 1
 						self._deleteItem(item)
 
 			# folder => create folder locally and go deeper
@@ -147,7 +150,9 @@ class pmb:
 					self._createFolderLocally(newOutputFolder)
 
 					# recurse over subfolder
-					self._downloadFolder(response2, newOutputFolder, skipFileTypes)
+					result += self._downloadFolder(response2, newOutputFolder, skipFileTypes)
+		
+		return result
 
 
 	def _countFolder(self, response, count = 0):
@@ -277,7 +282,7 @@ class pmb:
 	# fetchFolder
 	# -----------------------------------------------------------------------------------
 	#	* DESCRIPTION	fully download a folder 
-	#	* RETURNS		nothing
+	#	* RETURNS		number of downloaded files
 	# -----------------------------------------------------------------------------------
 	#	* <string> outputFolder = folder to put downloads in
 	#	* <string> folderName = folder on Premiumize to check
@@ -288,6 +293,8 @@ class pmb:
 	#	* <boolean> recursion = internal only; for recurring calls
 	# -----------------------------------------------------------------------------------
 	def fetchFolder(self, outputFolder, folderName = "root", recreateFolder = False, skipFileTypes = None, path = "", folderId = None, recursion = False):
+
+		result = 0
 
 		if not recursion:
 			print "--------------------------------------------------"
@@ -313,7 +320,7 @@ class pmb:
 			if response["name"] == folderName:
 				print ""
 				print " --> Found correct folder: " + path
-				self._downloadFolder(response, outputFolder, skipFileTypes)
+				result += self._downloadFolder(response, outputFolder, skipFileTypes)
 
 				if folderId:
 					print ""
@@ -337,4 +344,6 @@ class pmb:
 				for item in response["content"]:
 					if item["type"] == "folder":
 						newPath = path + "/" + item["name"]
-						self.fetchFolder(outputFolder, folderName, recreateFolder, skipFileTypes, newPath, item["id"], True)
+						result += self.fetchFolder(outputFolder, folderName, recreateFolder, skipFileTypes, newPath, item["id"], True)
+
+		return result
