@@ -85,10 +85,11 @@ class pmb:
 		try:
 			filename = os.path.basename(url)
 			print " - Downloading: " + filename
-			req = urllib2.urlopen(url)
+			req = urllib2.Request(url, headers={'User-Agent' : "Magic Browser"})
+			con = urllib2.urlopen(req)
 			with open(outputFolder + "/" + filename, "wb") as f:
 				while True:
-					chunk = req.read(16384)
+					chunk = con.read(16384)
 					if not chunk: break
 					f.write(chunk)
 			print "   -> SUCCESS"
