@@ -8,7 +8,7 @@
     :license: GNU General Public License v3.0, see LICENSE for more details
 """
 
-import urllib, urllib2, json, os
+import urllib, urllib2, json, os, shutil
 
 class pmb:
 
@@ -88,10 +88,7 @@ class pmb:
 			req = urllib2.Request(url, headers={'User-Agent' : "Magic Browser"})
 			con = urllib2.urlopen(req)
 			with open(outputFolder + "/" + filename, "wb") as f:
-				while True:
-					chunk = con.read(16384)
-					if not chunk: break
-					f.write(chunk)
+				shutil.copyfileobj(con, f, 16384)
 			print "   -> SUCCESS"
 			return True
 
