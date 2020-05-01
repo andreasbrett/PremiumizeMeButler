@@ -85,7 +85,7 @@ class pmb:
 
 	def _downloadFile(self, url, outputFolder):
 		try:
-			filename = os.path.basename(urllib.unquote(url).decode('utf8'))
+			filename = os.path.basename(urllib.parse.unquote(url))
 			print(" - Downloading: " + filename)
 			req = urllib.request.Request(url, headers={'User-Agent' : "Magic Browser"})
 			con = urllib.request.urlopen(req)
