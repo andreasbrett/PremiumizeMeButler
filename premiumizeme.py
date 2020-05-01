@@ -8,7 +8,9 @@
     :license: GNU General Public License v3.0, see LICENSE for more details
 """
 
-import urllib, urllib2, json, os, shutil
+import json, os, shutil
+import urllib.request
+import urllib.error
 
 class pmb:
 
@@ -44,13 +46,13 @@ class pmb:
 		# build request if queryParams are present
 		if queryParams:
 			queryParams.update(authParams)
-			uri = apiUri + "?%s" % urllib.urlencode(queryParams)
+			uri = apiUri + "?%s" % urllib.parse.urlencode(queryParams)
 		else:
-			uri = apiUri + "?%s" % urllib.urlencode(authParams)
+			uri = apiUri + "?%s" % urllib.parse.urlencode(authParams)
 
 		# fetch response
-		request = urllib2.Request(uri)
-		response = urllib2.urlopen(request).read()
+		request = urllib.request.Request(uri)
+		response = urllib.request.urlopen(request).read()
 
 		# return json data
 		return json.loads(response.decode("utf-8"))
@@ -65,39 +67,39 @@ class pmb:
 		response = self._makeApiRequest(pmb.uriDeleteFolder, {"id": folderId})
 
 		if response["status"] != "success":
-			print "   -> ERROR deleting folder"
-			print "      -> Message: " + response["message"]
+			print("   -> ERROR deleting folder")
+			print("      -> Message: " + response["message"])
 		else:
-			print "   -> deleted from Premiumize.me"
+			print("   -> deleted from Premiumize.me")
 
 
 	def _deleteItem(self, item):
 		response = self._makeApiRequest(pmb.uriDeleteItem, {"id": item["id"]})
 
 		if response["status"] != "success":
-			print "   -> ERROR deleting:" + item["name"]
-			print "      -> Message: " + response["message"]
+			print("   -> ERROR deleting:" + item["name"])
+			print("      -> Message: " + response["message"])
 		else:
-			print "   -> deleted from Premiumize.me"
+			print("   -> deleted from Premiumize.me")
 
 
 	def _downloadFile(self, url, outputFolder):
 		try:
 			filename = os.path.basename(urllib.unquote(url).decode('utf8'))
-			print " - Downloading: " + filename
-			req = urllib2.Request(url, headers={'User-Agent' : "Magic Browser"})
-			con = urllib2.urlopen(req)
+			print(" - Downloading: " + filename)
+			req = urllib.request.Request(url, headers={'User-Agent' : "Magic Browser"})
+			con = urllib.request.urlopen(req)
 			with open(outputFolder + "/" + filename, "wb") as f:
 				shutil.copyfileobj(con, f, 16384)
-			print "   -> SUCCESS"
+			print("   -> SUCCESS")
 			return True
 
-		except urllib2.HTTPError, e:
-			print "   -> ERROR: ", e.code, url
+		except urllib.error.HTTPError as e:
+			print("   -> ERROR: ", e.code, url)
 			return False
 
-		except urllib2.URLError, e:
-			print "   -> ERROR: ", e.reason, url
+		except urllib.error.URLError as e:
+			print("   -> ERROR: ", e.reason, url)
 			return False
 
 
@@ -119,7 +121,7 @@ class pmb:
 
 						# if extension matches skipFileTypes => skip and delete it
 						if extension == "." + skipFileType:
-							print " - SKIPPING: " + item["name"]
+							print(" - SKIPPING: " + item["name"])
 							self._deleteItem(item)
 							skipped = True
 							break
@@ -132,15 +134,15 @@ class pmb:
 
 			# folder => create folder locally and go deeper
 			if item["type"] == "folder":
-				print " - SUBFOLDER: " + item["name"]
-				print "************************"
+				print(" - SUBFOLDER: " + item["name"])
+				print("************************")
 
 				# fetch folder listing
 				response2 = self._makeApiRequest(pmb.uriFolders, {"id" : item["id"]})
 
 				if response2["status"] != "success":
-					print " - Error fetching folder listing"
-					print "   -> Message: " + response2["message"]
+					print(" - Error fetching folder listing")
+					print("   -> Message: " + response2["message"])
 				else:
 					newOutputFolder = outputFolder + "/" + item["name"]
 
@@ -186,11 +188,11 @@ class pmb:
 			response = self._makeApiRequest(pmb.uriCreateFolder, {"name": folderName})
 
 		if response["status"] == "success":
-			print "   -> created folder " + folderName
+			print("   -> created folder " + folderName)
 			return response["id"]
 		else:
-			print "   -> ERROR creating folder: " + folderName
-			print "      -> Message: " + response["message"]
+			print("   -> ERROR creating folder: " + folderName)
+			print("      -> Message: " + response["message"])
 
 
 	# -----------------------------------------------------------------------------------
@@ -245,7 +247,7 @@ class pmb:
 		if response["status"] == "success":
 			return response["id"]
 		else:
-			print "ERROR: " + response["message"]
+			print("ERROR: " + response["message"])
 
 
 	# -----------------------------------------------------------------------------------
@@ -295,14 +297,14 @@ class pmb:
 		result = 0
 
 		if not recursion:
-			print "--------------------------------------------------"
-			print " [PremiumizeMeButler] fetchFolder"
-			print "--------------------------------------------------"
-			print " * outputFolder:  " + outputFolder
-			print " * folderName:    " + folderName
+			print("--------------------------------------------------")
+			print(" [PremiumizeMeButler] fetchFolder")
+			print("--------------------------------------------------")
+			print(" * outputFolder:  " + outputFolder)
+			print(" * folderName:    " + folderName)
 			if skipFileTypes:
 				for skipFileType in skipFileTypes:
-					print " * skipFileType:  " + skipFileType
+					print(" * skipFileType:  " + skipFileType)
 			self._createFolderLocally(outputFolder)
 
 		if folderId:
@@ -311,31 +313,31 @@ class pmb:
 			response = self._makeApiRequest(pmb.uriFolders)
 
 		if response["status"] != "success":
-			print " - Error fetching folder listing for: " + folderName
-			print "   -> Message: " + response["message"]
+			print(" - Error fetching folder listing for: " + folderName)
+			print("   -> Message: " + response["message"])
 		else:
 
 			if response["name"] == folderName:
-				print ""
-				print " --> Found correct folder: " + path
+				print("")
+				print(" --> Found correct folder: " + path)
 				result += self._downloadFolder(response, outputFolder, skipFileTypes)
 
 				if folderId:
-					print ""
-					print " --> Checking if folder is empty now..."
+					print("")
+					print(" --> Checking if folder is empty now...")
 
 					# re-fetch response for this folder
 					response = self._makeApiRequest(pmb.uriFolders, {"id" : folderId})
 
 					if self._countFolder(response) == 0:
-						print " - Folder is empty: deleting it"
+						print(" - Folder is empty: deleting it")
 						self._deleteFolder(folderId)
 						
 						if recreateFolder:
-							print " - Re-creating folder"
+							print(" - Re-creating folder")
 							self.createFolder(folderName, response["parent_id"])
 					else:
-						print " - Folder not yet empty! Leaving it as is."
+						print(" - Folder not yet empty! Leaving it as is.")
 
 			else:
 				# correct folder not yet found. iterate over subfolders
